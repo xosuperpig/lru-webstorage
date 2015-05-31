@@ -1,0 +1,7 @@
+{
+  "undef": true,
+  "unused": true,
+
+  "browser": true,
+  "predef": ["define"]
+}
