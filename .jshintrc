@@ -3,5 +3,6 @@
   "unused": true,
 
   "browser": true,
-  "predef": ["define"]
+  "predef": ["define"],
+  "mocha": true
 }

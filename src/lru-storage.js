@@ -37,37 +37,50 @@
         }
     }
     LruStorage.ATTRIBUTES = ['maxAge', 'limit', 'limitSession'];
+
     LruStorage.prototype.set = function set(key, val, opt) {
         var item;
         //if there is no cacheItem storaged, create one
-        if (!(item = this.items.find[key])) {
+        if (!(item = this.items.find(key))) {
             item = new CacheItem({key: key, maxAge: Date.now() + this.maxAge});
             this.add(item, this.items, this.limit);
         }
 
         //save value
-        STORAGE[item.level].setItem(this.prefix + '-' + item.storageKey, val);
+        STORAGE[item.level].setItem(this.prefix + '-' + item.storageKey, JSON.stringify(val));
         this.saveConfig();
         return this;
     };
+
     LruStorage.prototype.get = function get(key, opt) {
         var item;
         //check if there is a cacheItem storaged yet
-        if (!(item = this.items.find(key))) return null;
+        if (!(item = this.items.find(key))) return ({}).undefined;
+        if (item.isStale()) {this.remove(this.items.indexOf(key)); return null;}
 
-        return STORAGE[item.level].getItem(this.prefix + '-' + item.storageKey);
+        return JSON.parse(STORAGE[item.level].getItem(this.prefix + '-' + item.storageKey));
     };
-    LruStorage.prototype.remove = function(item) {
+
+    LruStorage.prototype.remove = function(index) {
+        var item = this.items.arr[index];
         STORAGE[item.level].removeItem(this.prefix + '-' + item.storageKey);
+        if (index == this.items.length - 1) {
+            this.items.pop();
+        } else {
+            this.items.splice(index, 1);
+        }
         return this;
     };
+
     LruStorage.prototype.add = function(item) {
+        //remove the last one when items out of limit
         while (this.items.length >= this.limit)  {
-            this.remove(this.items.pop());
+            this.remove(this.items.length - 1);
         }
         this.items.unshift(item);
         return this;
     };
+
     LruStorage.prototype.saveConfig = function saveConfig() {
         var jsonItems = [];
         this.items.forEach(function(v) {
@@ -105,10 +118,11 @@
         this.level = obj.level || 'session';
 
         if (this.level != 'session' && this.level != 'local') {
-            throw 'there is no webstorage named ' + this.level + 'Storage';
+            throw 'there is no webstorage interface named ' + this.level + 'Storage';
         }
     }
     CacheItem.ATTRIBUTES = ['storageKey', 'maxAge', 'level'];
+    //create by a json string
     CacheItem.fromJSON = function parse(str) {
         var ret = {};
         try {
@@ -119,6 +133,10 @@
             }, ret);
         } catch(e) {}
         return ret;
+    };
+    //check if out of date
+    CacheItem.prototype.isStale = function isStale() {
+        return Date.now() > this.maxAge;
     };
 
     return CacheItem;
@@ -138,7 +156,7 @@
             }
         });
     }
-    ['forEach', 'push', 'shift', 'unshift', 'pop', 'every', 'concat'].forEach(function(key) {
+    ['forEach', 'push', 'shift', 'unshift', 'pop', 'every', 'concat', 'splice'].forEach(function(key) {
         LRUArray.prototype[key] = function() {
             return this.arr[key].apply(this.arr, arguments);
         };
@@ -166,10 +184,11 @@
         }, this);
         return ret;
     };
-    LRUArray.prototype.find = function(key) {
+    LRUArray.prototype.find = function(key, silent) {
         var index = this.indexOf(key);
-        this.updateByIndex(index);
-        return this.arr[index];
+        var item = this.arr[index];
+        if (!silent) {this.updateByIndex(index);}
+        return item;
     };
 
     return function (key) {

@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/xosuperpig/lru-webstorage/issues"
   },
-  "homepage": "https://github.com/xosuperpig/lru-webstorage"
+  "homepage": "https://github.com/xosuperpig/lru-webstorage",
+  "devDependencies": {
+    "expect.js": "^0.3.1"
+  }
 }
