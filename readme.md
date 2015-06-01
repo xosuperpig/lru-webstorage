@@ -1,6 +1,6 @@
 # simple usage:
 ```js
-lru = LruWebStorage('test');
+lru = LruWebStorage('test'); //data will be storaged as 'test-xxx' in webStorage
 lru.set('foo', 1);
 lru.get('foo');//1
 lru.get('bar');//undefined
