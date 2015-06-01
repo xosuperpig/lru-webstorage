@@ -3,8 +3,8 @@
  * @param prefix       define a prefix of the keys in localStorage
  * @param options
  *      maxAge
- *      limit           item limited in localStorage, defaults to 10,
- *      limitSession    item limited in sessionStoage, defaults to Infinity
+ *      limit           item limited in localStorage, defaults to 0(so all item will be saved in sessionStorage)
+ *      useSession      when an item is staled, detemine whether drop it or move it to sessionStorage, defaults to true
  *      -
  */
 
@@ -36,16 +36,15 @@
             }, this);
         }
     }
-    LruStorage.ATTRIBUTES = ['maxAge', 'limit', 'limitSession'];
+    LruStorage.ATTRIBUTES = ['maxAge', 'limit', 'useSession'];
 
     LruStorage.prototype.set = function set(key, val, opt) {
         var item;
         //if there is no cacheItem storaged, create one
         if (!(item = this.items.find(key))) {
             item = new CacheItem({key: key, maxAge: Date.now() + this.maxAge});
-            this.add(item, this.items, this.limit);
+            this.add(item);
         }
-
         //save value
         STORAGE[item.level].setItem(this.prefix + '-' + item.storageKey, JSON.stringify(val));
         this.saveConfig();
@@ -63,39 +62,52 @@
 
     LruStorage.prototype.remove = function(index) {
         var item = this.items.arr[index];
-        STORAGE[item.level].removeItem(this.prefix + '-' + item.storageKey);
-        if (index == this.items.length - 1) {
-            this.items.pop();
+
+        // console.log(this.useSession, index);
+        if (this.useSession) {
+            if (item.level == 'local') {
+                item.level = 'session';
+                STORAGE.local.removeItem(this.prefix + '-' + item.storageKey);
+                STORAGE.session.setItem(this.prefix + '-' + item.storageKey, STORAGE.local.getItem(this.prefix + '-' + item.storageKey));
+            }
+
         } else {
-            this.items.splice(index, 1);
+            STORAGE[item.level].removeItem(this.prefix + '-' + item.storageKey);
+            if (index == this.items.length - 1) {
+                this.items.pop();
+            } else {
+                this.items.splice(index, 1);
+            }
         }
         return this;
     };
 
     LruStorage.prototype.add = function(item) {
         //remove the last one when items out of limit
-        while (this.items.length >= this.limit)  {
-            this.remove(this.items.length - 1);
+        if (this.items.length >= this.limit && this.items.length > 0)  {
+            // console.log(this.items.length, this.limit);
+            for(var i = Math.max(0, this.limit - 1); i < this.items.length; i++) {
+                this.remove(i);
+            }
         }
         this.items.unshift(item);
         return this;
     };
 
     LruStorage.prototype.saveConfig = function saveConfig() {
-        var jsonItems = [];
+        var json = {_items: []};
+        //stringify all items and config
         this.items.forEach(function(v) {
             var citem = {};
             CacheItem.ATTRIBUTES.forEach(function(key) {
                 citem[key] = v[key];
             });
-            jsonItems.push(citem);
+            json._items.push(citem);
         });
-        STORAGE.local.setItem(this.prefix + '-lruconfig', JSON.stringify({
-            _items: jsonItems,
-            maxAge: this.maxAge,
-            limit: this.limit,
-            limitSession: this.limitSession
-        }));
+        LruStorage.ATTRIBUTES.forEach(function(attr) {
+            json[attr] = this[attr];
+        });
+        STORAGE.local.setItem(this.prefix + '-lruconfig', JSON.stringify(json));
     };
 
     return function(prefix, options) {
@@ -103,9 +115,8 @@
         options = options || {};
 
         oldConfig.maxAge = options.maxAge || oldConfig.maxAge || Infinity;
-        oldConfig.limit = options.limit || oldConfig.limit || Infinity;
-        oldConfig.limitSession = options.limitSession || oldConfig.limitSession || Infinity;
-
+        oldConfig.limit = options.limit || oldConfig.limit || 0;
+        oldConfig.useSession = ('useSession' in options) ? options.useSession : (('useSession' in oldConfig) ? oldConfig.useSession : true);
         return new LruStorage(prefix, oldConfig);
     };
 
@@ -115,7 +126,7 @@
     function CacheItem(obj) {
         this.storageKey = obj.storageKey || obj.key || '';
         this.maxAge = obj.maxAge || 0;
-        this.level = obj.level || 'session';
+        this.level = obj.level || 'local';
 
         if (this.level != 'session' && this.level != 'local') {
             throw 'there is no webstorage interface named ' + this.level + 'Storage';
