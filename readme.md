@@ -1,15 +1,15 @@
-simple usage:
+# simple usage:
 lru = LruWebStorage('test');
 lru.set('foo', 1);
 lru.get('foo');//1
 lru.get('bar');//undefined
 
-maxAge:
+## maxAge:
 lru = LruWebStorage('testStale', {maxAge: -1 * 6000});
 lru.set('a', 1);
 lru.get('a');//null
 
-lru:
+## lru:
 lru = LruWebStorage('testLimit', {limit: 2, useSession: false});
 lru.set('a', 1);
 lru.set('b', 2);
