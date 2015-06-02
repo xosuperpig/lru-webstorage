@@ -27,6 +27,7 @@
         LruStorage.ATTRIBUTES.forEach(function(key) {
             this[key] = options[key];
         }, this);
+        this.onStale = options.onStale;
 
         //keys
         this.items = LRUArray('storageKey');
@@ -63,6 +64,9 @@
     LruStorage.prototype.remove = function(index) {
         var item = this.items.arr[index];
 
+        if (typeof this.onStale == 'function') {
+            if (this.onStale(JSON.parse(STORAGE[item.level].getItem(this.prefix + '-' + item.storageKey)), this.useSession)) return;
+        }
         // console.log(this.useSession, index);
         if (this.useSession) {
             if (item.level == 'local') {
@@ -103,10 +107,10 @@
                 citem[key] = v[key];
             });
             json._items.push(citem);
-        });
+        }, this);
         LruStorage.ATTRIBUTES.forEach(function(attr) {
             json[attr] = this[attr];
-        });
+        }, this);
         STORAGE.local.setItem(this.prefix + '-lruconfig', JSON.stringify(json));
     };
 
@@ -117,6 +121,8 @@
         oldConfig.maxAge = options.maxAge || oldConfig.maxAge || Infinity;
         oldConfig.limit = options.limit || oldConfig.limit || 0;
         oldConfig.useSession = ('useSession' in options) ? options.useSession : (('useSession' in oldConfig) ? oldConfig.useSession : true);
+        oldConfig.onStale = options.onStale || null;
+
         return new LruStorage(prefix, oldConfig);
     };
 
@@ -145,6 +151,7 @@
         } catch(e) {}
         return ret;
     };
+
     //check if out of date
     CacheItem.prototype.isStale = function isStale() {
         return Date.now() > this.maxAge;

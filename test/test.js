@@ -33,14 +33,25 @@ describe('..', function () {
         it('get undefined', function() {
             expect(lru.get('b')).to.be(undefined);
         });
+
+        it('check localStorage config', function() {
+            var config = JSON.parse(localStorage.getItem('test-lruconfig'));
+            expect(config._items.length).to.be(2);
+            expect('maxAge' in config).to.be(true);
+            expect('limit' in config).to.be(true);
+            expect('useSession' in config).to.be(true);
+        });
     });
 
     describe('stale# ', function () {
-        beforeEach(function() {
-            lru = LruWebStorage('testStale', {maxAge: -1 * 6000});
-        });
 
         it('simple stale', function () {
+            lru = LruWebStorage('testStale', {
+                maxAge: -1 * 6000,
+                onStale: function (item) {
+                    expect(item).to.be(1);
+                }
+            });
             lru.set('a', 1);
             expect(lru.get('a')).to.be(null);
         });
