@@ -4,7 +4,7 @@ describe('..', function () {
         window.localStorage.clear();
     });
 
-    describe('simple operations# ', function () {
+    describe('just sessionStorage# ', function () {
         beforeEach(function() {
             lru = LruWebStorage('test');
         });
@@ -23,9 +23,10 @@ describe('..', function () {
                     athletic: 10
                 }
             });
+
             var obj = lru.get('obj');
             expect(obj.name).to.eql('zombie');
-            expect(obj.items.length).to.eql(2);
+            expect(obj.items.length).to.eql(0);
             expect(obj.attribute.intelligence).to.eql(40);
             expect(obj.attribute.athletic).to.eql(10);
         });
@@ -36,7 +37,7 @@ describe('..', function () {
 
         it('check localStorage config', function() {
             var config = JSON.parse(localStorage.getItem('test-lruconfig'));
-            expect(config._items.length).to.be(2);
+            expect(config._items.length).to.be(0);
             expect('maxAge' in config).to.be(true);
             expect('limit' in config).to.be(true);
             expect('useSession' in config).to.be(true);

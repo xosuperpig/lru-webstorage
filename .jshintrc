@@ -4,5 +4,6 @@
 
   "browser": true,
   "predef": ["define"],
-  "mocha": true
+  "mocha": true,
+  "devel": true
 }

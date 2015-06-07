@@ -23,14 +23,18 @@
     };
 
     function LruStorage(prefix, options) {
+
         this.prefix = prefix;
+
         LruStorage.ATTRIBUTES.forEach(function(key) {
             this[key] = options[key];
         }, this);
+
         this.onStale = options.onStale;
 
         //keys
         this.items = LRUArray('storageKey');
+        
         if (options._items) {
             options._items.forEach(function(v) {
                 this.items.unshift(new CacheItem(v));
@@ -67,7 +71,7 @@
         if (typeof this.onStale == 'function') {
             if (this.onStale(JSON.parse(STORAGE[item.level].getItem(this.prefix + '-' + item.storageKey)), this.useSession)) return;
         }
-        // console.log(this.useSession, index);
+        //move to session Storage or dropit.
         if (this.useSession) {
             if (item.level == 'local') {
                 item.level = 'session';
@@ -77,12 +81,14 @@
 
         } else {
             STORAGE[item.level].removeItem(this.prefix + '-' + item.storageKey);
+            //update the config
             if (index == this.items.length - 1) {
                 this.items.pop();
             } else {
                 this.items.splice(index, 1);
             }
         }
+
         return this;
     };
 
@@ -100,17 +106,22 @@
 
     LruStorage.prototype.saveConfig = function saveConfig() {
         var json = {_items: []};
-        //stringify all items and config
+        //stringify all items
         this.items.forEach(function(v) {
+            if (v.level != 'local') return;
+
             var citem = {};
             CacheItem.ATTRIBUTES.forEach(function(key) {
                 citem[key] = v[key];
             });
             json._items.push(citem);
         }, this);
+
+        //stringify config
         LruStorage.ATTRIBUTES.forEach(function(attr) {
             json[attr] = this[attr];
         }, this);
+
         STORAGE.local.setItem(this.prefix + '-lruconfig', JSON.stringify(json));
     };
 
@@ -160,6 +171,7 @@
     return CacheItem;
 
 }, function () {
+
     function LRUArray(idkey) {
         this.arr = [];
         this.idkey = typeof idkey == 'function' ? idkey : function(item) {return item[idkey];};

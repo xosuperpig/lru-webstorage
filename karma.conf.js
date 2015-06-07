@@ -14,9 +14,15 @@ module.exports = function(config) {
 
 
     // list of files / patterns to load in the browser
+    // files: [
+    //   './test/test.js',
+    //   './src/lru-storage.js',
+    //   './node_modules/expect.js/*.js'
+    // ],
+
     files: [
-      './test/*.js',
-      './src/*.js',
+      './test/testnew.js',
+      './lib/lruWebStorage.js',
       './node_modules/expect.js/*.js'
     ],
 
