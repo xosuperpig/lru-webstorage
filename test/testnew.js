@@ -22,6 +22,7 @@ describe('CacheItem - ', function () {
     });
 
     describe('object operation - ', function () {
+        var cacheItem;
         beforeEach(function () {
             cacheItem = new LruWebStorage.CacheItem({key: 'haha', level: 'local'});
         });
@@ -37,6 +38,7 @@ describe('CacheItem - ', function () {
     });
 
     describe('timing - ', function () {
+        var cacheItem;
         before(function () {
             cacheItem = new LruWebStorage.CacheItem({key: 'hehe', maxAge: -1});
         });
@@ -45,16 +47,17 @@ describe('CacheItem - ', function () {
             expect(cacheItem.isStale()).to.be(true);
         });
 
-        //TODO support timeout expect
-        it('lastuse', function () {
-            // setTimeout(function () {
-            //     cacheItem.val = 3;
-            //     expect(cacheItem.lastuse).to.be(Date.now());
-            // }, 300);
+        it('lastuse', function (done) {
+            setTimeout(function () {
+                cacheItem.val = 3;
+                expect(cacheItem.lastuse).to.be(Date.now());
+                done();
+            }, 300);
         });
     });
 
     describe('valid - ', function () {
+        var cacheItem;
         before(function () {
             cacheItem = new LruWebStorage.CacheItem({key: 'xixi'});
         });
@@ -70,6 +73,7 @@ describe('CacheItem - ', function () {
 
 describe('lruArray', function () {
     describe('simple operation', function() {
+        var arr, item1, item2;
         beforeEach(function () {
             arr = new LruWebStorage.LRUArray('storageKey');
             item1 = new LruWebStorage.CacheItem({key: 'hehe', lastuse: Date.now() - 1000});
@@ -78,28 +82,35 @@ describe('lruArray', function () {
             arr.push(item1);
         });
 
-        it('', function () {
+        it('', function (done) {
             expect(arr.length).to.be(2);
+            done();
         });
 
-        it('sort', function () {
+        it('sort', function (done) {
             expect(arr.indexOf(item2.storageKey)).to.be(0);
+            done();
         });
 
-        it('sortAgain', function () {
+        it('sortAgain', function (done) {
             arr.find(item1.storageKey).val = 3;
-            expect(arr.indexOf(item1.storageKey)).to.be(0);
+            setTimeout(function () {
+                expect(arr.indexOf(item1.storageKey)).to.be(0);
+                done();
+            }, 1);
+
         });
     });
 });
 
 describe('storage', function () {
-    beforeEach(function() { 
+    beforeEach(function() {
         sessionStorage.clear();
         localStorage.clear();
     });
 
     describe('just sessionStorage# ', function () {
+        var lru;
         beforeEach(function() {
             lru = LruWebStorage('test');
         });
@@ -121,7 +132,7 @@ describe('storage', function () {
 
             var obj = lru.get('obj');
             expect(obj.name).to.eql('zombie');
-            expect(obj.items.length).to.eql(0);
+            expect(obj.items.length).to.eql(2);
             expect(obj.attribute.intelligence).to.eql(40);
             expect(obj.attribute.athletic).to.eql(10);
         });
@@ -131,8 +142,18 @@ describe('storage', function () {
         });
 
         it('check localStorage config', function() {
+            lru.set('a', 1);
+            lru.set('obj', {
+                name: 'zombie',
+                items: ['head', 'brain'],
+                attribute: {
+                    intelligence: 40,
+                    athletic: 10
+                }
+            });
+
             var config = JSON.parse(localStorage.getItem('test-lruconfig'));
-            expect(config._items.length).to.be(0);
+            expect(config._items.length).to.be(2);
             expect('maxAge' in config).to.be(true);
             expect('limit' in config).to.be(true);
             expect('useSession' in config).to.be(true);
@@ -140,6 +161,7 @@ describe('storage', function () {
     });
 
     describe('stale# ', function () {
+        var lru;
 
         it('simple stale', function () {
             lru = LruWebStorage('testStale', {
@@ -154,6 +176,7 @@ describe('storage', function () {
     });
 
     describe('moveToSession', function () {
+        var lru;
         beforeEach(function() {
             lru = LruWebStorage('testMove', {limit: 2});
         });
@@ -168,6 +191,7 @@ describe('storage', function () {
     });
 
     describe('outOfLimit# ', function () {
+        var lru;
         beforeEach(function () {
             lru = LruWebStorage('testLimit', {limit: 2, useSession: false});
         });
