@@ -6,9 +6,38 @@
 </head>
 <body>
 
-<script src="src/lru-storage.js"></script>
+<script src="lib/lruWebStorage.js"></script>
+<script src="node_modules/expect.js/index.js"></script>
 <script>
-    var lru = LruWebStorage('lruTest', {maxAge: 10 * 60 * 1000});
+localStorage.clear();
+sessionStorage.clear();
+
+var delay = function (ms) {
+    return (function (def) {
+        setTimeout(function () {
+            def.resolve();
+        }, ms || 1);
+        return def.promise;
+    })(Promise.defer());
+};
+
+    var lru = LruWebStorage('testLimit', {limit: 2, useSession: false});
+    lru.set('a', 1);
+    delay()
+        .then(function () {
+            lru.set('b', 2);
+            return delay();
+        })
+        .then(function () {
+            lru.get('a');
+            lru.set('c', 3);
+            return delay(10);
+        })
+        .then(function () {
+            expect(lru.get('c')).to.be(3);
+            expect(lru.get('a')).to.be(1);
+            expect(lru.get('b')).to.be(undefined);
+        });
 </script>
 </body>
 </html>
