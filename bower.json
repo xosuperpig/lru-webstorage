@@ -1,0 +1,25 @@
+{
+  "name": "lru-webstorage",
+  "version": "1.0.0",
+  "homepage": "https://github.com/xosuperpig/lru-webstorage",
+  "authors": [
+    "xosuperpig <348063288@qq.com>"
+  ],
+  "description": "lru and maxAge for sessionStorage/localStorage",
+  "main": "lib/lruWebStorage.js",
+  "moduleType": [
+    "amd",
+    "cmd(sea.js)"
+  ],
+  "keywords": [
+    "localstorage",
+    "sessionStorage",
+    "lru",
+    "maxAge"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "node_modules",
+    "bower_components"
+  ]
+}
