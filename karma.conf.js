@@ -21,8 +21,8 @@ module.exports = function(config) {
     // ],
 
     files: [
-      './test/testnew.js',
-      './lib/lruWebStorage.js',
+      './test/test.js',
+      './min/lruWebStorage.js',
       './node_modules/expect.js/*.js'
     ],
 
